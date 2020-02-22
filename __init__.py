@@ -93,7 +93,7 @@ class FallbackSttSkill(MycroftSkill):
                     }
                 }
             }
-        elif stt_name == Stt.Local:
+        elif stt_name == Stt.Remote:
             new_config = {
                 'stt': {
                     'module': self.settings["remote_module"],

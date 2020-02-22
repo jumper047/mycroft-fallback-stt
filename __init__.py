@@ -34,6 +34,7 @@ class FallbackSttSkill(MycroftSkill):
         self.current_stt = None
         self.settings["remote_uri"] = 'http://192.168.1.35:8301/decode'
         self.settings["remote_module"] = 'kaldi'
+        self.settings["local_module"] = 'kaldi'        
         self.settings["local_uri"] = 'http://localhost:8301/decode'
 
     def initialize(self):

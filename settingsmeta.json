@@ -31,7 +31,7 @@
                     },
                     {
                         "name": "remote_uri",
-                        "type": "tet",
+                        "type": "text",
                         "label": "Set remote server url",
                         "value": "http://192.168.92.2:8080/stt"
                     }		    

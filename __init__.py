@@ -103,7 +103,14 @@ class FallbackSttSkill(MycroftSkill):
                     }
                 }
             }
-        self.bus.emit(Message('configuration.patch', new_config))
+        from mycroft.configuration.config import (
+            LocalConf, USER_CONFIG, Configuration
+        )
+
+        user_config = LocalConf(USER_CONFIG)
+        user_config.merge(new_config)
+        user_config.store()            
+        # self.bus.emit(Message('configuration.patch', new_config))
         self.bus.emit(Message('configuration.updated'))
         self.current_stt = stt_name
 

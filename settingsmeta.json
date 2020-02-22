@@ -1,0 +1,41 @@
+{
+    "skillMetadata": {
+        "sections": [
+            {
+                "name": "Local STT",
+                "fields": [
+                    {
+                        "name": "local_module",
+                        "type": "select",
+                        "label": "Select local STT type",
+			"options": "Kaldi|kaldi;Deepspeech|deepspeech_server",
+                        "value": "kaldi"
+                    },
+                    {
+                        "name": "local_uri",
+                        "type": "text",
+                        "label": "Set local server url",
+                        "value": "http://localhost:8080/client/dynamic/recognize"
+                    }		    
+                ]
+            },
+            {
+                "name": "Remote STT",
+                "fields": [
+                    {
+                        "name": "remote_module",
+                        "type": "select",
+                        "label": "Select remote STT type",
+			"options": "Kaldi|kaldi;Deepspeech|deepspeech_server;Mycroft|mycroft",
+                        "value": "kaldi"
+                    },
+                    {
+                        "name": "remote_uri",
+                        "type": "tet",
+                        "label": "Set remote server url",
+                        "value": "http://192.168.92.2:8080/stt"
+                    }		    
+                ]
+            }	    
+        ]
+    }

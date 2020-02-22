@@ -32,6 +32,9 @@ class FallbackSttSkill(MycroftSkill):
         super().__init__("FallbackSttSkill")
         self.host_re = r'^http(s|)://(?P<host>.*)(:[0-9]+)/.*$'
         self.current_stt = None
+        self.settings["remote_uri"] = 'http://192.168.1.35:8301/decode'
+        self.settings["remote_module"] = 'kaldi'
+        self.settings["local_uri"] = 'http://localhost:8301/decode'
 
     def initialize(self):
         self.settings_change_callback = self.reset_state

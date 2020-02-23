@@ -21,7 +21,7 @@ from mycroft import MycroftSkill
 
 
 def ping(host):
-    return subprocess.call(['ping', '-c', '1', host])
+    return subprocess.call(['ping', '-c', '1', host]) == 0
 
 
 Stt = enum.Enum("Stt", ["Local", "Remote"])

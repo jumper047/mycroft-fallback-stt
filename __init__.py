@@ -36,8 +36,9 @@ class FallbackSttSkill(MycroftSkill):
 
     def initialize(self):
         self.settings_change_callback = self.reset_state
-        self.add_event('recognizer_loop:no_internet', self.set_local_stt)
-        self.schedule_repeating_event(self.check_stt_state, None, 300,
+        # disabled, seems like it hangs up listener :/
+        # self.add_event('recognizer_loop:no_internet', self.set_local_stt)
+        self.schedule_repeating_event(self.check_stt_state, None, 120,
                                       "CheckSttState")
         self.reset_state()
 
@@ -135,7 +136,7 @@ class FallbackSttSkill(MycroftSkill):
 
     def shutdown(self):
         self.cancel_scheduled_event('CheckSttState')
-        self.remove_event('recognizer_loop:no_internet')
+        # self.remove_event('recognizer_loop:no_internet')
 
 
 def create_skill():

@@ -13,6 +13,7 @@
 # limitations under the License.
 import enum
 import subprocess
+import json
 
 from mycroft.messagebus.message import Message
 from mycroft.skills.core import intent_file_handler
@@ -90,7 +91,7 @@ class FallbackSttSkill(MycroftSkill):
             'stt': {
                 'module': self.settings["remote_module"],
                 self.settings["remote_module"]:
-                self.settings["remote_settings"]
+                json.loads(self.settings["remote_settings"])
             }
         }
         self.current_stt = Stt.Remote
@@ -100,7 +101,7 @@ class FallbackSttSkill(MycroftSkill):
         new_config = {
             'stt': {
                 'module': self.settings["local_module"],
-                self.settings["local_module"]: self.settings["local_settings"]
+                self.settings["local_module"]: json.loads(self.settings["local_settings"])
             }
         }
         self.current_stt = Stt.Local

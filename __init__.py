@@ -48,7 +48,8 @@ class FallbackSttSkill(MycroftSkill):
         remote_avail = ping(self.remote_stt_addr)
         self.log.info("Remote STT server is %s",
                       "online" if remote_avail else "offline")
-        if remote_avail and self.current_stt is Stt.Local:
+        if (remote_avail and self.current_stt is Stt.Local
+                and not self.force_local):
             self.set_remote_stt()
         elif not remote_avail and self.current_stt is Stt.Remote:
             self.set_local_stt()
@@ -86,10 +87,26 @@ class FallbackSttSkill(MycroftSkill):
             stt_type = self.settings["local_module"]
             self.speak_dialog('local.stt.used', data={'type': stt_type})
 
+    @intent_file_handler("UseLocalStt.intent")
+    def handle_use_local(self, message):
+        self.force_local = True
+        self.set_local_stt()
+        self.speak_dialog('switched.to.local')
+
+    @intent_file_handler("UseRemoteStt.intent")
+    def handle_use_remote(self, message):
+        self.force_local = False
+        if ping(self.remote_stt_addr):
+            self.set_remote_stt()
+            self.speak_dialog('switched.to.remote')
+        else:
+            self.speak_dialog('switch.to.remote.when.available')
+
     def set_remote_stt(self):
         new_config = {
             'stt': {
-                'module': self.settings["remote_module"],
+                'module':
+                self.settings["remote_module"],
                 self.settings["remote_module"]:
                 json.loads(self.settings["remote_settings"])
             }
@@ -100,8 +117,10 @@ class FallbackSttSkill(MycroftSkill):
     def set_local_stt(self):
         new_config = {
             'stt': {
-                'module': self.settings["local_module"],
-                self.settings["local_module"]: json.loads(self.settings["local_settings"])
+                'module':
+                self.settings["local_module"],
+                self.settings["local_module"]:
+                json.loads(self.settings["local_settings"])
             }
         }
         self.current_stt = Stt.Local

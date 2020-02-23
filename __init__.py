@@ -12,7 +12,6 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 import enum
-import re
 import subprocess
 
 from mycroft.messagebus.message import Message
@@ -30,12 +29,9 @@ Stt = enum.Enum("Stt", ["Local", "Remote"])
 class FallbackSttSkill(MycroftSkill):
     def __init__(self):
         super().__init__("FallbackSttSkill")
-        self.host_re = r'^http(s|)://(?P<host>.*)(:[0-9]+)/.*$'
+        self.force_local = False
+        self.settings_fullfilled = False
         self.current_stt = None
-        self.settings["remote_uri"] = 'http://192.168.1.35:8301/decode'
-        self.settings["remote_module"] = 'kaldi'
-        self.settings["local_module"] = 'kaldi'
-        self.settings["local_uri"] = 'http://localhost:8301/decode'
 
     def initialize(self):
         self.settings_change_callback = self.reset_state
@@ -46,26 +42,38 @@ class FallbackSttSkill(MycroftSkill):
 
     def check_stt_state(self):
         """Check stt server's current state and switch them if necessary"""
-
+        if not self.settings_fullfilled:
+            return None
         remote_avail = ping(self.remote_stt_addr)
         self.log.info("Remote STT server is %s",
                       "online" if remote_avail else "offline")
-        if (remote_avail and self.current_stt is Stt.Local) or (
-                not remote_avail and self.current_stt is Stt.Remote):
-            self.toggle_stt()
+        if remote_avail and self.current_stt is Stt.Local:
+            self.set_remote_stt()
+        elif not remote_avail and self.current_stt is Stt.Remote:
+            self.set_local_stt()
 
     def reset_state(self):
         """Recheck current state and apply apropriate settings"""
 
-        self.remote_stt_addr = re.match(
-            self.host_re, self.settings["remote_uri"]).group("host")
+        # Check settings
+        settings = [
+            self.settings.get("remote_module"),
+            self.settings.get("local_module"),
+            self.settings.get("remote_settings"),
+            self.settings.get("local_settings"),
+            self.settings.get("remote_url")
+        ]
+        self.settings_fullfilled = None not in settings
+        if not self.settings_fullfilled:
+            self.log.info("Skill parameters not set, temoprary disabled")
+            return None
+
+        self.remote_stt_addr = self.settings["remote_url"]
         if ping(self.remote_stt_addr):
-            self.set_stt(Stt.Local)
-            self.current_stt = Stt.Local
+            self.set_remote_stt()
             self.log.info("Connected to local STT server")
         else:
-            self.set_stt(Stt.Remote)
-            self.current_stt = Stt.Remote
+            self.set_local_stt()
             self.log.info("Connected to remote STT server")
 
     @intent_file_handler("WhichStt.intent")
@@ -77,46 +85,37 @@ class FallbackSttSkill(MycroftSkill):
             stt_type = self.settings["local_module"]
             self.speak_dialog('local.stt.used', data={'type': stt_type})
 
-    def toggle_stt(self):
-        if self.current_stt == Stt.Local:
-            self.log.info("Switching to remote STT")
-            self.set_stt(Stt.Remote)
-        elif self.current_stt == Stt.Remote:
-            self.log.info("Switching to local STT")
-            self.set_stt(Stt.Local)
-        else:
-            self.reset_state()
-
-    def set_stt(self, stt_name):
-        if stt_name == Stt.Local:
-            new_config = {
-                'stt': {
-                    'module': self.settings["local_module"],
-                    self.settings["local_module"]: {
-                        "uri": self.settings["local_uri"]
-                    }
-                }
+    def set_remote_stt(self):
+        new_config = {
+            'stt': {
+                'module': self.settings["remote_module"],
+                self.settings["remote_module"]:
+                self.settings["remote_settings"]
             }
-        elif stt_name == Stt.Remote:
-            new_config = {
-                'stt': {
-                    'module': self.settings["remote_module"],
-                    self.settings["remote_module"]: {
-                        "uri": self.settings["remote_uri"]
-                    }
-                }
-            }
-        from mycroft.configuration.config import (LocalConf, USER_CONFIG,
-                                                  Configuration)
+        }
+        self.current_stt = Stt.Remote
+        self._update_config(new_config)
 
+    def set_local_stt(self):
+        new_config = {
+            'stt': {
+                'module': self.settings["local_module"],
+                self.settings["local_module"]: self.settings["local_settings"]
+            }
+        }
+        self.current_stt = Stt.Local
+        self._update_config(new_config)
+
+    def _update_config(self, config):
+        from mycroft.configuration.config import (LocalConf, USER_CONFIG)
         user_config = LocalConf(USER_CONFIG)
-        user_config.merge(new_config)
+        user_config.merge(config)
         user_config.store()
         self.bus.emit(Message('configuration.updated'))
-        self.current_stt = stt_name
 
     def shutdown(self):
         self.cancel_scheduled_event('CheckSttState')
+        self.remove_event('recognizer_loop:no_internet')
 
 
 def create_skill():

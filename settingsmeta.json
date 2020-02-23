@@ -12,10 +12,10 @@
                         "value": "kaldi"
                     },
                     {
-                        "name": "local_uri",
+                        "name": "local_settings",
                         "type": "text",
-                        "label": "Set local server url",
-                        "value": "http://localhost:8080/client/dynamic/recognize"
+                        "label": "Set local server settings json string",
+                        "value": "{\"uri\": \"http://localhost:8080/client/dynamic/recognize\"}"
                     }		    
                 ]
             },
@@ -30,10 +30,16 @@
                         "value": "kaldi"
                     },
                     {
-                        "name": "remote_uri",
+                        "name": "remote_url",
                         "type": "text",
-                        "label": "Set remote server url",
-                        "value": "http://192.168.92.2:8080/stt"
+                        "label": "Set network address to check remote server's availability",
+                        "value": "http://192.168.1.43"
+                    },
+                    {
+                        "name": "remote_settings",
+                        "type": "text",
+                        "label": "Set remote server settings json string",
+                        "value": "{\"uri\": \"http://192.168.92.2:8080/stt\"}"
                     }		    
                 ]
             }	    

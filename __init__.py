@@ -34,12 +34,13 @@ class FallbackSttSkill(MycroftSkill):
         self.current_stt = None
         self.settings["remote_uri"] = 'http://192.168.1.35:8301/decode'
         self.settings["remote_module"] = 'kaldi'
-        self.settings["local_module"] = 'kaldi'        
+        self.settings["local_module"] = 'kaldi'
         self.settings["local_uri"] = 'http://localhost:8301/decode'
 
     def initialize(self):
         self.settings_change_callback = self.reset_state
-        self.schedule_repeating_event(self.check_stt_state, None, 60,
+        self.add_event('recognizer_loop:no_internet', self.toggle_stt)
+        self.schedule_repeating_event(self.check_stt_state, None, 300,
                                       "CheckSttState")
         self.reset_state()
 
@@ -47,6 +48,8 @@ class FallbackSttSkill(MycroftSkill):
         """Check stt server's current state and switch them if necessary"""
 
         remote_avail = ping(self.remote_stt_addr)
+        self.log.info("Remote STT server is %s",
+                      "online" if remote_avail else "offline")
         if (remote_avail and self.current_stt is Stt.Local) or (
                 not remote_avail and self.current_stt is Stt.Remote):
             self.toggle_stt()
@@ -59,27 +62,27 @@ class FallbackSttSkill(MycroftSkill):
         if ping(self.remote_stt_addr):
             self.set_stt(Stt.Local)
             self.current_stt = Stt.Local
+            self.log.info("Connected to local STT server")
         else:
             self.set_stt(Stt.Remote)
             self.current_stt = Stt.Remote
+            self.log.info("Connected to remote STT server")
 
     @intent_file_handler("WhichStt.intent")
     def handle_which_stt(self, message):
         if self.current_stt == Stt.Remote:
             stt_type = self.settings["remote_module"]
-            stt_location = "remote"
+            self.speak_dialog('remote.stt.used', data={'type': stt_type})
         elif self.current_stt == Stt.Local:
             stt_type = self.settings["local_module"]
-            stt_location = "local"
-
-        self.speak_dialog('stt.used',
-                          data={'type': stt_type,
-                                'location': stt_location})
+            self.speak_dialog('local.stt.used', data={'type': stt_type})
 
     def toggle_stt(self):
         if self.current_stt == Stt.Local:
+            self.log.info("Switching to remote STT")
             self.set_stt(Stt.Remote)
         elif self.current_stt == Stt.Remote:
+            self.log.info("Switching to local STT")
             self.set_stt(Stt.Local)
         else:
             self.reset_state()
@@ -103,14 +106,12 @@ class FallbackSttSkill(MycroftSkill):
                     }
                 }
             }
-        from mycroft.configuration.config import (
-            LocalConf, USER_CONFIG, Configuration
-        )
+        from mycroft.configuration.config import (LocalConf, USER_CONFIG,
+                                                  Configuration)
 
         user_config = LocalConf(USER_CONFIG)
         user_config.merge(new_config)
-        user_config.store()            
-        # self.bus.emit(Message('configuration.patch', new_config))
+        user_config.store()
         self.bus.emit(Message('configuration.updated'))
         self.current_stt = stt_name
 

@@ -27,19 +27,19 @@
                         "type": "select",
                         "label": "Select remote STT type",
 			"options": "Kaldi|kaldi;Deepspeech|deepspeech_server;Mycroft|mycroft",
-                        "value": "kaldi"
+                        "value": "mycroft"
                     },
                     {
                         "name": "remote_url",
                         "type": "text",
                         "label": "Set network address to check remote server's availability",
-                        "value": "http://192.168.1.43"
+                        "value": "google.com"
                     },
                     {
                         "name": "remote_settings",
                         "type": "text",
                         "label": "Set remote server settings json string",
-                        "value": "{\"uri\": \"http://192.168.92.2:8080/stt\"}"
+                        "value": ""
                     }		    
                 ]
             }	    
